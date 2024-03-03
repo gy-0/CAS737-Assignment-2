@@ -54,6 +54,12 @@ def concatenate(anim1, anim2):
     p3 = np.vstack((anim1.positions[:-30], blend_p, anim2.positions[31:]))
     return A.Animation(r3, p3, anim1.orients, anim1.offsets, anim1.parents)
 
+
+
+joints = ['RightShoulder','RightArm','RightForeArm','RightHand','RightHandIndex1','RightFingerBase','RThumb']
+
+
+
 #TODO: splice right arm waving from anim2 into anim1 walking
 def splice(anim1, anim2):
     pass
