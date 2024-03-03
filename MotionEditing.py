@@ -61,7 +61,7 @@ joints = ['RightShoulder','RightArm','RightForeArm','RightHand','RightHandIndex1
 
 
 #TODO: splice right arm waving from anim2 into anim1 walking
-def splice(anim1, anim2):
+def splice(anim1, anim2, joints_2):
     frames1 = anim1.shape[0]
     frames2 = anim2.shape[0]
     fps2 = 1.0 / frames2
@@ -93,15 +93,16 @@ def splice(anim1, anim2):
         i += 1
     return anim1
 
-
 '''load the walking motion'''
 filepath = ''
 filename_walk = filepath + '16_26.bvh'
 anim_walk, joint_names_walk, frametime_walk = BVH.load(filename_walk)
+# print(joint_names_walk)
 
 '''load the waving motion'''
 filename_wave = filepath + '111_37.bvh'
 anim_wave, joint_names_wave, frametime_wave = BVH.load(filename_wave)
+
 
 '''concatenate two animation slip'''
 anim_concatenated = concatenate(anim_walk, anim_wave)
