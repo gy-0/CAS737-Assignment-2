@@ -62,7 +62,36 @@ joints = ['RightShoulder','RightArm','RightForeArm','RightHand','RightHandIndex1
 
 #TODO: splice right arm waving from anim2 into anim1 walking
 def splice(anim1, anim2):
-    pass
+    frames1 = anim1.shape[0]
+    frames2 = anim2.shape[0]
+    fps2 = 1.0 / frames2
+    rotframes = anim2.rotations.qs.shape[0]
+    targframes = int(np.ceil(rotframes * frames1 / frames2))
+    resampled = np.zeros((targframes, anim2.rotations.qs.shape[1], anim2.rotations.qs.shape[2]),
+                                     dtype=anim2.rotations.qs.dtype)
+
+    for i in range(1, targframes - 1):
+        time = i * 1.0 / frames1
+        index = int(time // fps2)
+        alpha = (time - index * fps2) / fps2
+        q0 = Q.Quaternions(anim2.rotations.qs[index])
+        q1 = Q.Quaternions(anim2.rotations.qs[min(index + 1, rotframes - 1)])
+        resampled[i] = Q.Quaternions.slerp(q0, q1, alpha).qs
+    resampled[0] = anim2.rotations.qs[0]
+    resampled[-1] = anim2.rotations.qs[-1]
+    anim2_resampled = resampled
+    anim2_resampled = A.Animation(
+        Q.Quaternions(anim2_resampled),anim2.positions,anim2.orients,anim2.offsets,anim2.parents
+    )
+    joint_indices = [joints_2.index(name) for name in joints if name in joints_2]
+    i = 0
+    while i < frames1:
+        for a in joint_indices:
+            anim1.rotations[i][a] = anim2_resampled.rotations[i][a]
+            if anim1.positions is not None and anim2_resampled.positions is not None:
+                anim1.positions[i][a] = anim2_resampled.positions[i][a]
+        i += 1
+    return anim1
 
 
 '''load the walking motion'''
@@ -79,7 +108,8 @@ anim_concatenated = concatenate(anim_walk, anim_wave)
 filename_concatenated = filepath + 'result_concatenated.bvh'
 BVH.save(filename_concatenated, anim_concatenated, joint_names_walk, frametime_walk)
 
-anim_rotated = rotate_root(anim_walk, Q.Quaternions.from_euler(np.array([0, 90, 0])))
-filename_rotated = filepath + 'rotated.bvh'
-BVH.save(filename_rotated, anim_rotated, joint_names_walk, frametime_walk)
+anim_spliced = splice(anim_walk, anim_wave, joint_names_wave)
+filename_spliced = filepath + 'result_spliced.bvh'
+BVH.save(filename_spliced, anim_spliced, joint_names_walk, frametime_walk)
+
 print('DONE!')
